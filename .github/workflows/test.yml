@@ -7,7 +7,6 @@ on:
       - "*"
   pull_request:
     branches:
-      - 4
       - 3
       - master
 
