@@ -84,7 +84,6 @@ where
             treblle.add_request_body(get_request_body(&mut req).await?);
 
             let service_response: ServiceResponse = svc.call(req).await?;
-            treblle.stop_timer();
 
             let (service_response, mut data) = treblle.collect_data(service_response);
 
@@ -93,10 +92,10 @@ where
 
             if debug {
                 log::debug!("Treblle payload data:\n{:#?}", &data);
+                data.send_debug().await;
+            } else {
+                data.send();
             }
-
-            // Send the payload to Treblle
-            data.send(debug).await;
 
             Ok(service_response)
         })

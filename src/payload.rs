@@ -11,7 +11,7 @@ pub(crate) struct TreblleResponseData {
     pub headers: HashMap<String, String>,
     pub code: Option<u16>,
     pub size: Option<u64>,
-    pub load_time: Option<f32>,
+    pub load_time: Option<String>,
     pub body: Option<serde_json::Value>,
 }
 
@@ -117,12 +117,6 @@ impl TreblleData {
         self.data.request.body = Some(body);
     }
 
-    /// Mark the end of the request processing
-    pub fn stop_timer(&mut self) {
-        let end = Utc::now();
-        self.data.response.load_time = Some(get_micros_from(self.start, end));
-    }
-
     /// Collect the data from the service response and return it back
     pub fn collect_data(mut self, sr: ServiceResponse) -> (ServiceResponse, TreblleData) {
         let extractor = Extractor::new(sr);
@@ -143,6 +137,8 @@ impl TreblleData {
 
         let (sr, body) = extractor.get_response_body();
         self.data.response.body = Some(body);
+
+        self.data.response.load_time = Some(get_seconds_with_micro(self.start, None));
 
         (sr, self)
     }
@@ -168,8 +164,22 @@ impl TreblleData {
         clear_hashmap(&mut self.data.response.headers, &fields);
     }
 
+    /// Send where we don't wait for the execution of the request to finish
+    pub fn send(self) {
+        tokio::spawn(async move {
+            let client = reqwest::Client::new();
+            let _ = client
+                .post("https://rocknrolla.treblle.com")
+                .timeout(std::time::Duration::from_secs(2))
+                .header("x-api-key", &self.api_key)
+                .json(&self)
+                .send()
+                .await;
+        });
+    }
+
     /// Send payload to Treblle
-    pub async fn send(self, debug: bool) {
+    pub async fn send_debug(self) {
         let client = reqwest::Client::new();
         let req = client
             .post("https://rocknrolla.treblle.com")
@@ -183,17 +193,10 @@ impl TreblleData {
             Ok(res) => {
                 log::debug!("Response: {:#?}", res);
 
-                if debug {
-                    let body = res.text().await.unwrap_or_else(|_| "".to_string());
-                    log::debug!("Response body: {}", body);
-                }
+                let body = res.text().await.unwrap_or_else(|_| "".to_string());
+                log::debug!("Response body: {}", body);
             }
-            Err(e) => match debug {
-                true => {
-                    panic!("{:#?}", e);
-                }
-                false => log::error!("{:#?}", e),
-            },
+            Err(e) => panic!("{:#?}", e),
         };
     }
 }
@@ -242,11 +245,21 @@ fn clear_hashmap(map: &mut HashMap<String, String>, fields: &[String]) {
     }
 }
 
-/// Get microseconds from start and end date
-fn get_micros_from(start: DateTime<Utc>, end: DateTime<Utc>) -> f32 {
-    let duration = end - start;
+/// Get microseconds from start and end date, the reason for the shenanings in this
+/// function is to get the proper microseconds without a f64 error where 0.1 + 0.2 != 0.3
+fn get_seconds_with_micro(start: DateTime<Utc>, end: Option<DateTime<Utc>>) -> String {
+    let end = end.unwrap_or_else(Utc::now);
+    let start_seconds = start.timestamp() as f64;
+    let start_micros = start.timestamp_subsec_micros() as f64 / 1000000_f64;
+    let start_with_micros = start_seconds as f64 + start_micros as f64;
 
-    duration.num_microseconds().unwrap_or_default() as f32 / 100000_f32
+    let end_seconds = end.timestamp() as f64;
+    let end_micros = end.timestamp_subsec_micros() as f64 / 1000000_f64;
+    let end_with_micros = end_seconds as f64 + end_micros as f64;
+
+    let duration = end_with_micros - start_with_micros;
+
+    format!("{:.5}", duration)
 }
 
 #[cfg(test)]
@@ -293,9 +306,25 @@ mod test {
         let start = chrono::Utc::now();
         let end = start
             .clone()
-            .checked_add_signed(chrono::Duration::seconds(1))
+            .checked_add_signed(chrono::Duration::microseconds(2000))
             .unwrap();
 
-        assert_eq!(super::get_micros_from(start, end), 10.0_f32);
+        assert_eq!(super::get_seconds_with_micro(start, Some(end)), "0.00200");
+
+        let start = chrono::Utc::now();
+        let end = start
+            .clone()
+            .checked_add_signed(chrono::Duration::milliseconds(200))
+            .unwrap();
+
+        assert_eq!(super::get_seconds_with_micro(start, Some(end)), "0.20000");
+
+        let start = chrono::Utc::now();
+        let end = start
+            .clone()
+            .checked_add_signed(chrono::Duration::seconds(500))
+            .unwrap();
+
+        assert_eq!(super::get_seconds_with_micro(start, Some(end)), "500.00000");
     }
 }

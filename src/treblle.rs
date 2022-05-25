@@ -44,6 +44,9 @@ impl Treblle {
 
     /// Turn on the debug mode
     ///
+    /// WARNING: Turning this option ON can slow down your requests by 10 fold sometimes because
+    /// we are waiting for the response from Treblle.com.
+    ///
     /// ```rust,ignore
     /// HttpServer::new(|| {
     ///     App::new()
