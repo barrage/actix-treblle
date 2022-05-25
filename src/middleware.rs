@@ -9,7 +9,7 @@ use futures::{
     task::{Context, Poll},
     StreamExt,
 };
-use serde_json::Value;
+use serde_json::{Map, Value};
 use std::cell::RefCell;
 use std::pin::Pin;
 use std::rc::Rc;
@@ -116,5 +116,28 @@ async fn get_request_body(sr: &mut ServiceRequest) -> Result<Value, Error> {
     orig_payload.unread_data(bytes.clone());
     sr.set_payload(actix_http::Payload::from(orig_payload));
 
-    Ok(serde_json::from_slice::<Value>(&bytes).unwrap_or(Value::Null))
+    if bytes.is_empty() {
+        return Ok(Value::Null);
+    }
+
+    Ok(match serde_json::from_slice::<Value>(&bytes) {
+        Ok(v) => v,
+        Err(_) => match String::from_utf8(bytes.to_vec()) {
+            Ok(s) => {
+                let mut map = Map::new();
+                map.insert("request_as_a_string".to_string(), Value::String(s));
+
+                Value::Object(map)
+            }
+            Err(_) => {
+                let mut map = Map::new();
+                map.insert(
+                    "request_as_raw_bytes".to_string(),
+                    Value::String(format!("{:?}", bytes)),
+                );
+
+                Value::Object(map)
+            }
+        },
+    })
 }

@@ -137,7 +137,19 @@ impl Extractor {
         (
             sr,
             match bytes {
-                Some(b) => serde_json::from_slice::<Value>(&b).unwrap_or(Value::Null),
+                Some(b) => {
+                    if b.is_empty() {
+                        Value::Null
+                    } else {
+                        match serde_json::from_slice::<Value>(&b) {
+                            Ok(v) => v,
+                            Err(_) => match String::from_utf8(b.to_vec()) {
+                                Ok(s) => Value::String(s),
+                                Err(_) => Value::String(format!("{:?}", b)),
+                            },
+                        }
+                    }
+                }
                 None => Value::Null,
             },
         )
