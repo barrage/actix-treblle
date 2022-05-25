@@ -32,7 +32,7 @@ where
         ok(TreblleMiddleware {
             project_id: self.project_id.clone(),
             api_key: self.api_key.clone(),
-            debug: self.debug.clone(),
+            debug: self.debug,
             masking_fields: self.masking_fields.clone(),
             ignored_routes: self.ignored_routes.clone(),
             service: Rc::new(RefCell::new(service)),
@@ -66,12 +66,12 @@ where
         let svc = self.service.clone();
         let api_key = self.api_key.clone();
         let project_id = self.project_id.clone();
-        let debug = self.debug.clone();
+        let debug = self.debug;
         let masking_fields = self.masking_fields.clone();
 
         let skip_treblle = self
             .ignored_routes
-            .contains(&req.match_pattern().unwrap_or("".to_string()));
+            .contains(&req.match_pattern().unwrap_or_else(|| "".to_string()));
 
         Box::pin(async move {
             // If we are skipping treblle, we will only do the call for the

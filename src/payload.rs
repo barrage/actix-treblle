@@ -79,25 +79,13 @@ impl Default for TreblleServerData {
     }
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Default)]
 pub(crate) struct TreblleDataInner {
     pub server: TreblleServerData,
     pub language: TreblleLanguageData,
     pub request: TreblleRequestData,
     pub response: TreblleResponseData,
     pub errors: Vec<serde_json::Value>,
-}
-
-impl Default for TreblleDataInner {
-    fn default() -> TreblleDataInner {
-        TreblleDataInner {
-            server: TreblleServerData::default(),
-            language: TreblleLanguageData::default(),
-            request: TreblleRequestData::default(),
-            response: TreblleResponseData::default(),
-            errors: vec![],
-        }
-    }
 }
 
 #[derive(Serialize, Debug)]
@@ -196,7 +184,7 @@ impl TreblleData {
                 log::debug!("Response: {:#?}", res);
 
                 if debug {
-                    let body = res.text().await.unwrap_or("".to_string());
+                    let body = res.text().await.unwrap_or_else(|_| "".to_string());
                     log::debug!("Response body: {}", body);
                 }
             }
@@ -244,7 +232,7 @@ fn clear_map(map: &mut Map<String, Value>, fields: &[String]) {
 
 /// Clear given fields out of a HashMap
 fn clear_hashmap(map: &mut HashMap<String, String>, fields: &[String]) {
-    for (key, value) in map.into_iter() {
+    for (key, value) in map.iter_mut() {
         if key.to_lowercase() == "authorization" {
             let v = value.split(' ').collect::<Vec<&str>>();
             *value = format!("{} {}", v.get(0).unwrap_or(&""), "******");

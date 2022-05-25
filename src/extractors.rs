@@ -57,11 +57,11 @@ impl Extractor {
                 .split('(')
                 .collect::<Vec<&str>>()
                 .get(0)
-                .unwrap_or_else(|| &"")
+                .unwrap_or(&"")
                 .split(" {{")
                 .collect::<Vec<&str>>()
                 .get(0)
-                .unwrap_or_else(|| &"")
+                .unwrap_or(&"")
                 .to_string();
 
             map.insert("source".to_string(), Value::String("onError".to_string()));
@@ -85,7 +85,7 @@ impl Extractor {
             .request()
             .connection_info()
             .realip_remote_addr()
-            .unwrap_or_else(|| "127.0.0.1")
+            .unwrap_or("127.0.0.1")
             .to_string()
     }
 
