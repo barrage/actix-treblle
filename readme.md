@@ -3,11 +3,27 @@
 # actix-treblle
 
 ```toml
-actix-treblle = "0.1.0"
+actix-treblle = "4.0.0"
 ```
 
-Treblle.com connector for Rust Actix web framework
+Treblle.com connector for Rust Actix web framework.
 
+```rust
+use actix_web::{App, HttpServer};
+use actix_treblle::Treblle;
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+   HttpServer::new(|| {
+       App::new()
+           .wrap(Treblle::new("project_id".to_string(), "api_key".to_string()))
+           .route("/hello", web::get().to(|| async { "Hello World!" }))
+   })
+   .bind(("127.0.0.1", 8080))?
+   .run()
+   .await
+}
+```
 
 ## License
 
