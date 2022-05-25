@@ -296,6 +296,6 @@ mod test {
             .checked_add_signed(chrono::Duration::seconds(1))
             .unwrap();
 
-        assert_eq!(super::get_micros_from(start, end), 1.00000_f32);
+        assert_eq!(super::get_micros_from(start, end), 10.0_f32);
     }
 }
