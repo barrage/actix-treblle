@@ -23,7 +23,7 @@
 //!
 //! Go to [Treblle.com](https://treblle.com/) register and create a project, copy your `project_id` and go and get your `api_key` from settings.
 //!
-//! Add this crate to your Rust Actix v4 powered application as a regular middleware, give it `project_id` and `api_key`, turn on the [features you might need](https://docs.rs/actix-treblle/latest/actix_treblle/)
+//! Add this crate to your Rust Actix v4 powered application as a regular middleware, give it `project_id` and `api_key`, turn on the [features you might need](https://docs.rs/actix-treblle/latest/actix_treblle/struct.Treblle.html)
 //! and thats it! Watch your requests get logged in Treblle project.
 //!
 //! Example:
