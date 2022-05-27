@@ -1,6 +1,6 @@
 [package]
 name = "actix-treblle"
-version = "4.0.0"
+version = "4.0.1"
 authors = [
     "Tibor Hudik <tibor@barrage.net>",
     "Matej Zagar <matej.zagar@barrage.net>",
@@ -11,6 +11,7 @@ keywords = ["treblle", "actix", "middleware"]
 description = "Treblle makes it super easy to understand what's going on with your APIs and the apps that use them."
 homepage = "https://www.treblle.com"
 repository = "https://github.com/barrage/actix-treblle"
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
