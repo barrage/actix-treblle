@@ -106,6 +106,28 @@ where
 /// that is universal JSON holder. If the deserialization of the request data fails, we'll treat
 /// it as a Null.
 async fn get_request_body(sr: &mut ServiceRequest) -> Result<Value, Error> {
+    let content_type = sr
+        .headers()
+        .get("content-type")
+        .map(|v| v.clone().to_str().unwrap_or("").to_string())
+        .unwrap_or_else(|| "".to_string())
+        .to_lowercase();
+
+    // TODO: Content type that is not application json won't be logged since it can cause
+    // harm in some setups, this might be a feature to implement sometimes in the future,
+    // once we get a proper chance to test it and figure out all the bugs that keep happening,
+    // but for now we will simply set it as Null value in the log.
+    //
+    // Issue that we got was that some multipart forms weren't recognized properly after
+    // the things we did here below to them, the issue couldn't be reproduced in a local
+    // setting, but it was happening within the cluster.
+    //
+    // Payload would apear okay in treblle.com, but later methods that were supposed
+    // to handle that payload reported invalid multipart data, or form data.
+    if content_type != "application/json" {
+        return Ok(Value::Null);
+    }
+
     let mut request_body = BytesMut::new();
     while let Some(chunk) = sr.take_payload().next().await {
         request_body.extend_from_slice(&chunk?);
