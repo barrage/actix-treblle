@@ -3,7 +3,7 @@
 # actix-treblle
 
 ```toml
-actix-treblle = "4.0.1"
+actix-treblle = "4.0.2"
 ```
 
 Treblle.com connector for Rust Actix web framework.

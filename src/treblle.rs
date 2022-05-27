@@ -103,8 +103,6 @@ impl Treblle {
     /// - "credit_score"
     /// - "creditScore"
     ///
-    /// Add a vector of route matching patterns, same as you would define them in your application.
-    ///
     /// ```rust,ignore
     /// HttpServer::new(|| {
     ///     App::new()
@@ -113,6 +111,8 @@ impl Treblle {
     ///                .add_masking_fields(vec![
     ///                    "password".to_string(),
     ///                    "ssl_key".to_string(),
+    ///                    "cookie".to_string(),
+    ///                    "csrf".to_string(),
     ///                ])
     ///         )
     ///         .route("/hello", web::get().to(|| async { "Hello World!" }))
@@ -137,7 +137,7 @@ impl Treblle {
     ///             actix_treblle::Treblle::new("project_id".to_string(), "api_key".to_string())
     ///                .add_ignored_routes(vec![
     ///                    "/users/{user_id}".to_string(),
-    ///                    "/users/{user_id}".to_string(),
+    ///                    "/users/{user_id}/change-password".to_string(),
     ///                ])
     ///         )
     ///         .route("/hello", web::get().to(|| async { "Hello World!" }))

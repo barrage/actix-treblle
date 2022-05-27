@@ -1,6 +1,6 @@
 [package]
 name = "actix-treblle"
-version = "4.0.1"
+version = "4.0.2"
 authors = [
     "Tibor Hudik <tibor@barrage.net>",
     "Matej Zagar <matej.zagar@barrage.net>",
