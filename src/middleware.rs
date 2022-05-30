@@ -2,6 +2,7 @@ use actix_http::{h1::Payload, HttpMessage};
 use actix_web::{
     dev::{Service, ServiceRequest, ServiceResponse, Transform},
     error::Error,
+    http::header,
     web::BytesMut,
 };
 use futures::{
@@ -63,23 +64,25 @@ where
     }
 
     fn call(&self, mut req: ServiceRequest) -> Self::Future {
+        let skip_treblle = self
+            .ignored_routes
+            .contains(&req.match_pattern().unwrap_or_else(|| "".to_string()));
+
+        // If we are skipping treblle, we will only do the call for the
+        // further request and skip anything else.
+        if skip_treblle {
+            let fut = self.service.call(req);
+
+            return Box::pin(async move { fut.await });
+        }
+
         let svc = self.service.clone();
         let api_key = self.api_key.clone();
         let project_id = self.project_id.clone();
         let debug = self.debug;
         let masking_fields = self.masking_fields.clone();
 
-        let skip_treblle = self
-            .ignored_routes
-            .contains(&req.match_pattern().unwrap_or_else(|| "".to_string()));
-
         Box::pin(async move {
-            // If we are skipping treblle, we will only do the call for the
-            // further request and skip anything else.
-            if skip_treblle {
-                return svc.call(req).await;
-            }
-
             let mut treblle = TreblleData::new(api_key, project_id);
             treblle.add_request_body(get_request_body(&mut req).await?);
 
@@ -108,7 +111,7 @@ where
 async fn get_request_body(sr: &mut ServiceRequest) -> Result<Value, Error> {
     let content_type = sr
         .headers()
-        .get("content-type")
+        .get(header::CONTENT_TYPE)
         .map(|v| v.clone().to_str().unwrap_or("").to_string())
         .unwrap_or_else(|| "".to_string())
         .to_lowercase();
